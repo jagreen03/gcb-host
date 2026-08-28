@@ -1,0 +1,8 @@
+build/
+*.o
+*.so
+__pycache__/
+*.pyc
+.venv/
+*.db
+*.db-journal
