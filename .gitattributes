@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.sv   text eol=lf
+*.v    text eol=lf
+*.xdc  text eol=lf
+*.png  binary
+*.pdf  binary
