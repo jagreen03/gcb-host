@@ -1,0 +1,55 @@
+GCB STATE COMPRESSION: V1 (2026-09-07)
+
+1. Architecture Status: Single-Slope CIS Readout
+
+Analog State: CONDITIONAL GO. Photodiode current sinks from a 2.0 pF passive
+capacitor (discharge-mode). Chopped/auto-zeroed preamp at 30 uA tail current +
+StrongARM latch. Total measured surrogate noise is 53 uV (+/-16% model error
+band of 44.5 to 61.5 uV), safely clearing the 72 uV failure point for 56 dB
+SNDR.
+
+Digital State (RTL): VERIFIED. 12-bit Gray counter at 6 GHz (carry-select to
+pass SS/125C), 4-phase capture (24 GS/s). 3-point digital quadratic
+calibration. Icarus Verilog is 10,000/10,000 bit-exact against the Python
+golden model.
+
+Energy: Digital logic = 0.04 fJ/MAC. Total readout = 0.55 fJ/MAC (36x below the
+20 fJ/MAC budget).
+
+Standing Item: Requires a commercial transient-noise histogram (Cadence
+Spectre) to eliminate the +/-16% open-source BSIM4 surrogate uncertainty.
+
+2. Repository Map (5 Repos, Pushed & Synced)
+
+gcb-spec: Source of truth. registers.yaml, regen.py, ADRs (ADR-005 locked).
+gcb-rtl: Pilot RTL, Vortex-side shim, Icarus testbenches.
+gcb-host & gcb-dashboard: Host software, Python proxy, React monitoring UI.
+gcb-papers: arXiv drafts, evidence data (mc_v2, spice, ramp_inl), build
+  scripts for PDFs.
+gcb-wiki: Decision ledger, figure specs, generated SVGs, Preliminary Datasheet.
+
+3. Strategic Deliverables
+
+GCB_Readout_Preprint.pdf (15 pp): Formatted for cs.AR arXiv, authored under
+  SSRN ID 6514718.
+GCB_Preliminary_Datasheet.pdf (9 pp): Fully modeled electrical characteristics,
+  timing, and register map with "NO SILICON EXISTS" disclaimers.
+scripts/build_pdfs.sh: Automated PDF generation pipeline via WeasyPrint.
+
+--- provenance / rebuild notes (appended by build session) ---
+Repos live at D:\R\S\H\{gcb-spec,gcb-rtl,gcb-host,gcb-dashboard,gcb-papers,gcb-wiki}
+  (WSL: /mnt/d/R/S/H/...). All on branch main, synced with origin as of
+  2026-09-07.
+Last commits: gcb-papers 8fa1a05 (preprint + PDF pipeline);
+  gcb-wiki dd0c7d9 (datasheet SVG embed, rev PRELIM-A rev.2).
+PDF rebuild: WSL, no sudo -> private venv ~/.venvs/gcbpdf
+  (weasyprint markdown pygments). Run:
+    cd /mnt/d/R/S/H/gcb-papers && bash scripts/build_pdfs.sh
+  Outputs (git-ignored) -> gcb-papers/releases/GCB_Readout_Preprint.pdf,
+  GCB_Preliminary_Datasheet.pdf.
+  LaTeX alternative: sudo apt-get install -y pandoc librsvg2-bin tectonic ;
+  GCB_PDF_ENGINE=pandoc scripts/build_pdfs.sh
+Key evidence files (gcb-papers/data/readout/): spice/SPICE_RESULTS_V2.md (ramp),
+  spice/SPICE_RESULTS_V3.md (comparator + toolchain + final gate),
+  spice/comparator_noise.json, ramp_inl/ramp_inl_meta.json, spice/mc_v2/*.json,
+  rtl/RTL_REPORT.md, ANALYSIS.md. ADR: gcb-spec/docs/adr/ADR-005-Single-Slope-Readout.md.
