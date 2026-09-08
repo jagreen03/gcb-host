@@ -85,6 +85,37 @@ Each prompt embeds this state compression plus its lane's hard-won history and
 ends any boundary-crossing analysis with an explicit hand-off line. gcb-spec
 README.md has an "AI Onboarding (Paved Road)" section at the top.
 
+6. In-flight -- Streaming Tensor DMA (post-v0.1, not tagged)
+
+Inbound operand feed that streams activation + weight tiles from memory to the
+optical modulator DACs, bypassing Von Neumann starvation. On main, past the
+v0.1 tags.
+
+  spec  gcb-spec/docs/streaming_dma_architecture.md  (AGENT 01: AXI4 read-only
+        master, 32-B 2D/3D tensor descriptor, ping-pong + weight-stationary
+        buffers, credit handshake, MMIO ring vs custom-0 instruction)
+  geom  gcb-spec/docs/optical_geometry_spec.md v1.0.0 LOCKED: N=64 optical
+        channels, L=16 contraction lanes/fire, T_fire=500 ps (2.0 GHz),
+        512 fires/256 ns window, K_total=8192, INT8. Activation BW floor
+        32 GB/s; weight tile 512 KiB; AXI 512-bit @ 300 MHz x2; activation
+        ping-pong 2x16 KiB; weight buffer 64x8 KiB distributed.
+  regs  registers.yaml map_version 0.6.0: DMA block 0xC4-0xE4 (DMA_CTRL,
+        DESC_RING_BASE, DESC_HEAD/TAIL doorbell, DESC_WINDOW auto-inc,
+        WEIGHT_TILE, DMA_STATUS) + IRQ_CTRL.IRQ_DMA_DONE_EN[5]/UNDERRUN_EN[6];
+        address_space.end 0xC0 -> 0xE4; five regen consumers regenerated.
+  rtl   gcb-rtl/rtl/greencoyote_dma_{walker,axi_master}.sv +
+        greencoyote_streaming_dma.sv, instantiated in greencoyote_top.sv;
+        greencoyote_photonic_sequencer.sv gained the opt_clk operand-feed
+        ports + seq_fire/dma_armed handshake.
+  tb    gcb-rtl/sim/tb_dma_integration.sv (run_dma_tb.sh): MMIO descriptor +
+        doorbell -> mock AXI counter memory -> dma_armed -> sequencer consumes
+        1018 operand rows, all matched, no underrun.
+        === tb_dma_integration: ALL CHECKS PASS ===
+        run_ss_tb.sh and run_pilot_tb.sh still green.
+  open  DMA *.sv lint + OOC timing (300 MHz / 2 GHz); in-memory descriptor
+        ring fetch; read-side pad zero-fill; WT_SHAPE table beyond shape 0;
+        wiring irq_dma_*_en from pilot_regs IRQ_CTRL[6:5].
+
 --- provenance / rebuild notes ---
 Repos live at D:\R\S\H\{gcb-spec,gcb-rtl,gcb-host,gcb-dashboard,gcb-papers,gcb-wiki}
   (WSL: /mnt/d/R/S/H/...). All on branch main, synced with origin; all tagged
@@ -95,6 +126,12 @@ v0.1 tag commits: gcb-spec 43a4ba3, gcb-rtl da0c6e5, gcb-host e5bb19d,
 GitHub releases: one per repo at v0.1 (plus gcb-spec v0.1.1). Only the
   gcb-papers v0.1 release carries binary assets: GCB_Readout_Preprint.pdf,
   GCB_Preliminary_Datasheet.pdf.
+Post-v0.1 work on main (not tagged): Streaming Tensor DMA -- section 6.
+  gcb-spec  docs/streaming_dma_architecture.md, docs/optical_geometry_spec.md,
+            docs/milestones/, MILESTONES.md, registers.yaml map_version 0.6.0.
+  gcb-rtl   greencoyote_dma_*.sv, greencoyote_streaming_dma.sv, top + sequencer
+            integration, sim/tb_dma_integration.sv.
+  gcb-host / gcb-dashboard / gcb-wiki  regenerated regmap 0.6.0 consumers.
 This file is committed identically to all six repos; update it in all six when
   the state changes. It is committed AFTER the v0.1 tags, so the v0.1-tagged
   copies predate sections 4-5 of this revision.
