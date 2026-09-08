@@ -1,5 +1,9 @@
 GCB STATE COMPRESSION: V1 (2026-09-07)
 
+Engineering snapshot unchanged since the v0.1 tags. Sections 4-5 and the
+provenance notes were added 2026-09-07 to record the release + AI-onboarding
+work; no gate number, verdict, or design decision changed.
+
 1. Architecture Status: Single-Slope CIS Readout
 
 Analog State: CONDITIONAL GO. Photodiode current sinks from a 2.0 pF passive
@@ -19,14 +23,18 @@ Energy: Digital logic = 0.04 fJ/MAC. Total readout = 0.55 fJ/MAC (36x below the
 Standing Item: Requires a commercial transient-noise histogram (Cadence
 Spectre) to eliminate the +/-16% open-source BSIM4 surrogate uncertainty.
 
-2. Repository Map (5 Repos, Pushed & Synced)
+2. Repository Map (6 Repos, Pushed & Synced)
 
-gcb-spec: Source of truth. registers.yaml, regen.py, ADRs (ADR-005 locked).
-gcb-rtl: Pilot RTL, Vortex-side shim, Icarus testbenches.
-gcb-host & gcb-dashboard: Host software, Python proxy, React monitoring UI.
-gcb-papers: arXiv drafts, evidence data (mc_v2, spice, ramp_inl), build
-  scripts for PDFs.
-gcb-wiki: Decision ledger, figure specs, generated SVGs, Preliminary Datasheet.
+gcb-spec:      Source of truth. registers.yaml, regen.py, ADRs (ADR-005
+              locked), architecture.md, docs/MAP.md, SPICE env scripts,
+              ai-agents/ role prompts.
+gcb-rtl:      Pilot RTL, Vortex-side shim, Icarus testbenches.
+gcb-host:     Host software: generated C++ header + Python register proxy.
+gcb-dashboard: React monitoring UI: generated TypeScript register map.
+gcb-papers:   arXiv drafts, evidence data (mc_v2, spice, ramp_inl), build
+              scripts for PDFs.
+gcb-wiki:     Decision ledger, figure specs, generated SVGs, Preliminary
+              Datasheet.
 
 3. Strategic Deliverables
 
@@ -36,12 +44,60 @@ GCB_Preliminary_Datasheet.pdf (9 pp): Fully modeled electrical characteristics,
   timing, and register map with "NO SILICON EXISTS" disclaimers.
 scripts/build_pdfs.sh: Automated PDF generation pipeline via WeasyPrint.
 
---- provenance / rebuild notes (appended by build session) ---
+4. Release State -- v0.1 (2026-09-07)
+
+All six repos carry an annotated v0.1 tag with a published GitHub release, all
+on branch main and synced with origin. Coordinated CONDITIONAL GO snapshot.
+
+  repo           v0.1 tag commit   note
+  gcb-spec       43a4ba3           source of truth; ALSO tag v0.1.1 -> 68e0c1d
+                                     (ai-agents/, documentation/process only)
+  gcb-rtl        da0c6e5           readout back-end VERIFIED (10000/10000)
+  gcb-host       e5bb19d           regmap 0.5.2 consumer
+  gcb-dashboard  7666883           regmap 0.5.2 consumer
+  gcb-papers     683d9cf           release carries both PDFs as binary assets
+  gcb-wiki       7d32f15           datasheet rev PRELIM-A rev.2
+
+Each tagged tree includes this file. Only the gcb-papers v0.1 release carries
+binary assets (the two PDFs). gcb-spec v0.1.1 is a documentation/process point
+release on top of v0.1 -- engineering identical.
+
+5. AI Onboarding -- gcb-spec/ai-agents/  (introduced at tag v0.1.1)
+
+Role-specific system prompts to initialize AI sessions into isolated personas
+so context (and this state) is loaded once, not re-derived every session. Any
+new AI agent: read gcb-spec/ai-agents/README.md first and adopt a persona.
+
+  AGENT_01_SYSTEM_ARCHITECT  macro-architecture, Vortex RISC-V ISA tap, DMA /
+                             carry-save streaming, MMIO usability, avoiding
+                             Von Neumann starvation. Not analog, not RTL.
+  AGENT_02_ANALOG_EVALUATOR  deep-submicron physics, SPICE, transient noise,
+                             V=Q/C, the CONDITIONAL GO boundary and gate
+                             limits. Rejects V=Q/C violations and optical
+                             time-expansion delay lines. Not RTL, not arch.
+  AGENT_03_RTL_VERIFIER      bit-exact verification, SystemVerilog, static-CMOS
+                             timing closure, toggle-count energy, regen.py
+                             discipline, DD-001 (carry-select; a 12-bit ripple
+                             carry is ~195 ps at SS/125C and fails the 166.7 ps
+                             period). Not analog, not arch.
+
+Each prompt embeds this state compression plus its lane's hard-won history and
+ends any boundary-crossing analysis with an explicit hand-off line. gcb-spec
+README.md has an "AI Onboarding (Paved Road)" section at the top.
+
+--- provenance / rebuild notes ---
 Repos live at D:\R\S\H\{gcb-spec,gcb-rtl,gcb-host,gcb-dashboard,gcb-papers,gcb-wiki}
-  (WSL: /mnt/d/R/S/H/...). All on branch main, synced with origin as of
-  2026-09-07.
-Last commits: gcb-papers 8fa1a05 (preprint + PDF pipeline);
-  gcb-wiki dd0c7d9 (datasheet SVG embed, rev PRELIM-A rev.2).
+  (WSL: /mnt/d/R/S/H/...). All on branch main, synced with origin; all tagged
+  v0.1 (gcb-spec also v0.1.1) as of 2026-09-07.
+v0.1 tag commits: gcb-spec 43a4ba3, gcb-rtl da0c6e5, gcb-host e5bb19d,
+  gcb-dashboard 7666883, gcb-papers 683d9cf, gcb-wiki 7d32f15.
+  gcb-spec v0.1.1 -> 68e0c1d (adds ai-agents/).
+GitHub releases: one per repo at v0.1 (plus gcb-spec v0.1.1). Only the
+  gcb-papers v0.1 release carries binary assets: GCB_Readout_Preprint.pdf,
+  GCB_Preliminary_Datasheet.pdf.
+This file is committed identically to all six repos; update it in all six when
+  the state changes. It is committed AFTER the v0.1 tags, so the v0.1-tagged
+  copies predate sections 4-5 of this revision.
 PDF rebuild: WSL, no sudo -> private venv ~/.venvs/gcbpdf
   (weasyprint markdown pygments). Run:
     cd /mnt/d/R/S/H/gcb-papers && bash scripts/build_pdfs.sh
