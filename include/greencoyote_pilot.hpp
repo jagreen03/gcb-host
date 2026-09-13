@@ -286,13 +286,21 @@ public:
     void enable_irq(bool fire_done   = true,
                     bool cal_err     = false,
                     bool queue_full  = false,
-                    bool pass_done   = false)
+                    bool pass_done   = false,
+                    bool dma_done    = false,
+                    bool dma_underrun = false)
     {
         uint32_t val = regmap::kIRQ_CTRL_IRQ_ENMask;
-        if (fire_done)  val |= regmap::kIRQ_CTRL_IRQ_FIRE_DONE_ENMask;
-        if (cal_err)    val |= regmap::kIRQ_CTRL_IRQ_CAL_ERR_ENMask;
-        if (queue_full) val |= regmap::kIRQ_CTRL_IRQ_QUEUE_FULL_ENMask;
-        if (pass_done)  val |= regmap::kIRQ_CTRL_IRQ_PASS_DONE_ENMask;
+        if (fire_done)    val |= regmap::kIRQ_CTRL_IRQ_FIRE_DONE_ENMask;
+        if (cal_err)      val |= regmap::kIRQ_CTRL_IRQ_CAL_ERR_ENMask;
+        if (queue_full)   val |= regmap::kIRQ_CTRL_IRQ_QUEUE_FULL_ENMask;
+        if (pass_done)    val |= regmap::kIRQ_CTRL_IRQ_PASS_DONE_ENMask;
+        // IRQ_CTRL[5]/[6], map_version 0.6.0 - added to the register map
+        // well after this helper was first written (GCB-040 found and
+        // fixed the matching RTL-side gap; this closes the host-side
+        // half so software has an actual path to ever set these bits).
+        if (dma_done)     val |= regmap::kIRQ_CTRL_IRQ_DMA_DONE_ENMask;
+        if (dma_underrun) val |= regmap::kIRQ_CTRL_IRQ_DMA_UNDERRUN_ENMask;
         write_reg(regmap::kIRQ_CTRL, val);
     }
 
